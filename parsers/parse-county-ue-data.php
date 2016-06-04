@@ -10,3 +10,19 @@ for ($i = 0; $i < FILE_HEADING_SIZE; $i++) {
   fgets($data);
 }
 
+$headers = ['luas_area_code', 'fips_state', 'fips_county', 'county_name', 'period', 'civ_labor_force', 'employed', 'ue_level', 'ue_rate'];
+$parsedData = [];
+while ($line = fgets($data)) {
+  $columns = array_map('trim', explode('|', $line));
+  if (count($columns) !== count($headers)) {
+    break;
+  }
+  $countyData = array_combine($headers, $columns);
+  foreach (['civ_labor_force', 'employed', 'ue_level'] as $key) {
+    $countyData[$key] = (int)str_replace(',', '', $countyData[$key]);
+  }
+  settype($countyData['ue_rate'], 'float');
+  $parsedData[] = $countyData;
+}
+
+fwrite(STDOUT, json_encode($parsedData, JSON_PRETTY_PRINT));
