@@ -14,7 +14,7 @@ for ($i = 0; $i < 6; $i++) {
   fgets($data);
 }
 $headers = ['luas_area_code', 'fips_state', 'fips_county', 'county_name', 'period', 'civ_labor_force', 'employed', 'ue_level', 'ue_rate'];
-$counties = [];
+$areas = [];
 while ($line = fgets($data)) {
   $columns = array_map('trim', explode('|', $line));
   if (count($columns) !== count($headers)) {
@@ -25,7 +25,8 @@ while ($line = fgets($data)) {
     $countyData[$key] = (int)str_replace(',', '', $countyData[$key]);
   }
   $countyData['ue_rate'] = $countyData['ue_rate'] / 100;
-  $counties[implode('', [$countyData['fips_state'], $countyData['fips_county']])] = $countyData;
+  $countyData['pz'] = false;
+  $areas[implode('', [$countyData['fips_state'], $countyData['fips_county']])] = $countyData;
 }
 fclose($data);
 unset($data);
@@ -48,10 +49,10 @@ while ($line = fgetcsv($data)) {
   }
   $county = array_combine($headers, $line);
   $countyId = $county['County ID'];
-  if (!array_key_exists($countyId, $counties)) {
+  if (!array_key_exists($countyId, $areas)) {
     continue;
   }
-  $counties[$countyId]['pv_rate'] = $county['All Ages in Poverty Percent'] / 100;
+  $areas[$countyId]['pv_rate'] = $county['All Ages in Poverty Percent'] / 100;
 }
 fclose($data);
 unset($data);
@@ -70,22 +71,46 @@ $countyPops = [];
 while ($line = fgetcsv($data)) {
   $county = array_combine($headers, $line);
   list(,$countyId) = explode('US', $line[0]);
-  if (!array_key_exists($countyId, $counties)) {
+  if (!array_key_exists($countyId, $areas)) {
     continue;
   }
   settype($county['year'], 'int');
   settype($county['population'], 'int');
   $countyPops[$countyId][$county['year']] = $county['population'];
 }
+fclose($data);
+unset($data);
 $countyPops = array_map(function ($pops) {
   return $pops[max(array_keys($pops))];
 }, $countyPops);
 foreach ($countyPops as $countyId => $population) {
-  $counties[$countyId]['pop'] = $population;
+  $areas[$countyId]['pop'] = $population;
 }
 
-$counties = array_filter($counties, function ($c) {
-  return !empty($c['pv_rate']) && !empty($c['pop']);
+//                            _                                      
+//  _ __  _ __ ___  _ __ ___ (_)___  ___    _______  _ __   ___  ___ 
+// | '_ \| '__/ _ \| '_ ` _ \| / __|/ _ \  |_  / _ \| '_ \ / _ \/ __|
+// | |_) | | | (_) | | | | | | \__ \  __/   / / (_) | | | |  __/\__ \
+// | .__/|_|  \___/|_| |_| |_|_|___/\___|  /___\___/|_| |_|\___||___/
+// |_|                                                               
+$promiseZonesFile = implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'data', 'promise-zones.json']);
+$promiseZones = json_decode(file_get_contents($promiseZonesFile), true);
+foreach ($promiseZones as $zone) {
+  // just generate a random ID, since $areas is keyed by FIPS id
+  $id = bin2hex(openssl_random_pseudo_bytes(8));
+  $area = array_intersect_key($zone, array_flip('pv_rate', 'pop', 'ue_rate'));
+  $area['area_name'] = $zone['pz_name'];
+  $area['pz'] = true;
+  $areas[$id] = $area;
+}
+
+$areas = array_filter($areas, function ($c) {
+  return !empty($c['pv_rate']) && !empty($c['pop']) && !empty($c['ue_rate']);
 });
 
-fwrite(STDOUT, json_encode($counties, JSON_PRETTY_PRINT));
+$areas = array_map(function ($c) {
+  $c['area_name'] = $c['county_name'];
+  return array_intersect_key($c, array_flip(['pv_rate', 'pop', 'ue_rate', 'area_name', 'pz']));
+}, $areas);
+
+fwrite(STDOUT, json_encode(array_values($areas), JSON_PRETTY_PRINT));
