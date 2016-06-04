@@ -98,7 +98,7 @@ $promiseZones = json_decode(file_get_contents($promiseZonesFile), true);
 foreach ($promiseZones as $zone) {
   // just generate a random ID, since $areas is keyed by FIPS id
   $id = bin2hex(openssl_random_pseudo_bytes(8));
-  $area = array_intersect_key($zone, array_flip('pv_rate', 'pop', 'ue_rate'));
+  $area = array_intersect_key($zone, array_flip(['pv_rate', 'pop', 'ue_rate']));
   $area['area_name'] = $zone['pz_name'];
   $area['pz'] = true;
   $areas[$id] = $area;
@@ -109,7 +109,9 @@ $areas = array_filter($areas, function ($c) {
 });
 
 $areas = array_map(function ($c) {
-  $c['area_name'] = $c['county_name'];
+  if (!$c['pz']) {
+    $c['area_name'] = $c['county_name'];
+  }
   return array_intersect_key($c, array_flip(['pv_rate', 'pop', 'ue_rate', 'area_name', 'pz']));
 }, $areas);
 
