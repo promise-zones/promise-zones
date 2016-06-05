@@ -86,7 +86,7 @@
 				.on("zoom", zoomed);
 
 			var vis = d3.select('#graph')
-				.call(zoom)
+				.call(zoom);
 
 			var xAxis = d3.svg.axis().scale(xRange).tickFormat(d3.format("%"));
 
@@ -97,6 +97,7 @@
 				.call(xAxis)
 				.attr("transform", "translate(0, " + bottomEdge + ")")
 				.call(zoom);
+
 			vis.append("svg:g")
 				.attr('class', 'yaxis')
 				.call(yAxis)
@@ -159,11 +160,9 @@
 				.style("text-anchor", "middle")
 				.text("Poverty Rate");
 
-			d3.select("#togglebutton").on("click", toggle);
-
-			function toggle() {
+			d3.select("#togglebutton").on("click", function () {
 				$('body').toggleClass('pz-hidden');
-			}
+			});
 
 			function zoomed() {
 				vis.select(".xaxis").call(xAxis);
