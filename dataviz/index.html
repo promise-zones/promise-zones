@@ -49,6 +49,14 @@
 			fill: none;
 			stroke: #000;
 		}
+
+		.x-axis-label, .y-axis-label {
+			text-anchor: middle;
+		}
+
+		.border-margin {
+			opacity: .8;
+		}
 	</style>
 
 	<script>
@@ -92,18 +100,6 @@
 
 			var yAxis = d3.svg.axis().scale(yRange).tickFormat(d3.format("%")).orient("left");
 
-			vis.append("svg:g")
-				.attr('class', 'xaxis')
-				.call(xAxis)
-				.attr("transform", "translate(0, " + bottomEdge + ")")
-				.call(zoom);
-
-			vis.append("svg:g")
-				.attr('class', 'yaxis')
-				.call(yAxis)
-				.attr("transform", "translate(" + opts.margin.left + ", 0)")
-				.call(zoom);
-
 			// Define the div for the tooltip
 			var div = d3.select("body").append("div")
 				.attr("class", "tooltip")
@@ -142,14 +138,44 @@
 				});
 
 			// color is based on isPromiseZone
-			//debugger;
 			circles.selectAll('.pz').moveToFront();
 
+			// Background for border axis
+			vis.append('rect')
+				.attr('x', 0)
+				.attr('y', 0)
+				.attr('width', opts.margin.left)
+				.attr('height', 10000)
+				.attr('fill', 'white')
+				.attr('class', 'border-margin');
+
+			vis.append('rect')
+				.attr('x', 0)
+				.attr('y', bottomEdge)
+				.attr('width', rightEdge + 100)
+				.attr('height', 100)
+				.attr('fill', 'white')
+				.attr('class', 'border-margin');
+
+			// Axis numbers
+			vis.append("svg:g")
+				.attr('class', 'xaxis')
+				.call(xAxis)
+				.attr("transform", "translate(0, " + bottomEdge + ")")
+				.call(zoom);
+
+			vis.append("svg:g")
+				.attr('class', 'yaxis')
+				.call(yAxis)
+				.attr("transform", "translate(" + opts.margin.left + ", 0)")
+				.call(zoom);
+
+			// Axis labels
 			vis.append("text")
 				.attr("y", bottomEdge + (opts.margin.bottom / 2))
 				.attr("x", opts.margin.left + (chartWidth / 2))
 				.attr("dy", "1em")
-				.style("text-anchor", "middle")
+				.attr('class', 'x-axis-label')
 				.text("Unemployment Rate");
 
 			vis.append("text")
@@ -157,7 +183,7 @@
 				.attr("y", opts.margin.lefttext )
 				.attr("x", 0 - ((bottomEdge - opts.margin.top) / 2))
 				.attr("dy", "1em")
-				.style("text-anchor", "middle")
+				.attr('class', 'y-axis-label')
 				.text("Poverty Rate");
 
 			d3.select("#togglebutton").on("click", function () {
@@ -170,7 +196,6 @@
 				vis.select(".scatter")
 					.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 			}
-
 		}
 		d3.json('https://raw.githubusercontent.com/nkcmr/cfm-promise-zones/master/areas.json', draw);
 	</script>
