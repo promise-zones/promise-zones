@@ -66,7 +66,8 @@
 			chartHeight = 500 - opts.margin.top - opts.margin.bottom,
 			chartWidth = 960 - opts.margin.left - opts.margin.right,
 			bottomEdge = opts.margin.top + chartHeight,
-			rightEdge = opts.margin.left + chartWidth;
+			rightEdge = opts.margin.left + chartWidth,
+			usePythagoras = false;
 
 		function draw(data) {
 			d3.selection.prototype.moveToFront = function() {
@@ -215,8 +216,15 @@
 					}
 					var x = this.data[i].ue_rate * 100 * xWeight;
 					var y = this.data[i].pv_rate * 100 * yWeight;
-					// a^2 + b^2 = h^2
-					this.data[i].delta = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+					if (usePythagoras) {
+						// This method docks you if you have equal x and y so probably not smart to use, leaving
+						// in so we can experiment using it
+						// a^2 + b^2 = h^2
+						this.data[i].delta = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+					} else {
+						// Better way - does NOT favor things that have more in x or y
+						this.data[i].delta = x + y;
+					}
 				}
 				this.data.sort(function (a, b) {
 					return b.delta - a.delta;
