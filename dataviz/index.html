@@ -7,7 +7,7 @@
 	<script src="http://d3js.org/topojson.v1.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 	<style>
-		#svg-container {
+		#svg-container, #candidates {
 			font-family: Arial, sans-serif;
 		}
 
@@ -124,17 +124,17 @@
 				})
 				.on("mouseover", function(d) {
 					div.transition()
-					.duration(200)
-					.style("opacity", .9);
+						.duration(200)
+						.style("opacity", .9);
 					div	.html(d.area_name + "<br/>Unemployment: "  + d3.format(".1%")(d.ue_rate) + " Poverty: " + d3.format(".1%")(d.pv_rate))
-					.style("left", (d3.event.pageX) + "px")
-					.style("top", (d3.event.pageY - 28) + "px")
-					.style("background", function() { if (d.pz) { return "pink"; } else { return "lightsteelblue"; } });
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px")
+						.style("background", function() { if (d.pz) { return "pink"; } else { return "lightsteelblue"; } });
 				})
 				.on("mouseout", function(d) {
 					div.transition()
-					.duration(500)
-					.style("opacity", 0);
+						.duration(500)
+						.style("opacity", 0);
 				});
 
 			// color is based on isPromiseZone
@@ -190,6 +190,9 @@
 				$('body').toggleClass('pz-hidden');
 			});
 
+			candidates.data = data;
+			candidates.rank();
+
 			function zoomed() {
 				vis.select(".xaxis").call(xAxis);
 				vis.select(".yaxis").call(yAxis);
@@ -197,14 +200,62 @@
 					.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 			}
 		}
+		var candidates = {
+			data: [],
+			rank: function() {
+				var xWeight = $('#xWeight').val();
+				var yWeight = $('#yWeight').val();
+
+				// Lets make the range of x and y "roughly" the same
+				for (var i = 0; i < this.data.length; i++) {
+					if (this.data[i].pz) {
+						// already a promize zone - put delta at 0 to indicate they are not candidates
+						this.data[i].delta = 0;
+						continue;
+					}
+					var x = this.data[i].ue_rate * 100 * xWeight;
+					var y = this.data[i].pv_rate * 100 * yWeight;
+					// a^2 + b^2 = h^2
+					this.data[i].delta = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+				}
+				this.data.sort(function (a, b) {
+					return b.delta - a.delta;
+				});
+				$('#candidates ol').empty();
+				// now list out the top 50 or so
+				for (var i = 0; i < 50; i++) {
+					var d = this.data[i];
+					// @todo: figure out way to link up to chart - maybe trigger tooltip or something
+					// OR Give this it's own tab or something
+					//
+					// TODO: Maybe figure out way to color these on the chart dynamically (so when weights change, it
+					// updates)
+					$('#candidates ol').append($('<li>'+ d.area_name + '<br>Unemployment: ' + d3.format(".1%")(d.ue_rate) +
+						' Poverty: ' + d3.format(".1%")(d.pv_rate) + '</li>'));
+				}
+			},
+		};
 		d3.json('https://raw.githubusercontent.com/nkcmr/cfm-promise-zones/master/areas.json', draw);
 	</script>
 </head>
 <body>
 	<button id="togglebutton">Toggle</button>
+	<a href="#candidates">See Candidates</a>
 	<div id='svg-container'>
 		<svg id='graph'>
 		</svg>
+	</div>
+	<div id="candidates">
+		<h1>Potential Candidates for Future Promise Zones</h1>
+		<labal>
+			<input type="number" min="0" max="100" value="1" id="xWeight" onchange="candidates.rank()">
+			Unemployment Weight
+		</labal>
+		<br>
+		<label>
+			<input type="number" min="0" max="100" value="1" id="yWeight" onchange="candidates.rank()">
+			Poverty Rate Weight<!-- Say that 5 times fast! -->
+		<ol></ol>
 	</div>
 </body>
 </html>
