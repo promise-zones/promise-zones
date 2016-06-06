@@ -33,6 +33,10 @@
 			fill-opacity: 0.1;
 		}
 
+		li.pz {
+			color: red;
+		}
+
 		div.tooltip {
 			position: absolute;
 			text-align: center;
@@ -206,14 +210,10 @@
 			rank: function() {
 				var xWeight = $('#xWeight').val();
 				var yWeight = $('#yWeight').val();
+				var count = $('#count').val();
 
 				// Lets make the range of x and y "roughly" the same
 				for (var i = 0; i < this.data.length; i++) {
-					if (this.data[i].pz) {
-						// already a promize zone - put delta at 0 to indicate they are not candidates
-						this.data[i].delta = 0;
-						continue;
-					}
 					var x = this.data[i].ue_rate * 100 * xWeight;
 					var y = this.data[i].pv_rate * 100 * yWeight;
 					if (usePythagoras) {
@@ -229,14 +229,15 @@
 				});
 				$('#candidates ol').empty();
 				// now list out the top 50 or so
-				for (var i = 0; i < 50; i++) {
+				for (var i = 0; i < count; i++) {
 					var d = this.data[i];
 					// @todo: figure out way to link up to chart - maybe trigger tooltip or something
 					// OR Give this it's own tab or something
 					//
 					// TODO: Maybe figure out way to color these on the chart dynamically (so when weights change, it
 					// updates)
-					$('#candidates ol').append($('<li>'+ d.area_name + '<br>Unemployment: ' + d3.format(".1%")(d.ue_rate) +
+					var liClass = d.pz ? 'pz' : 'not-pz';
+					$('#candidates ol').append($('<li class="' + liClass + '">'+ d.area_name + '<br>Unemployment: ' + d3.format(".1%")(d.ue_rate) +
 						' Poverty: ' + d3.format(".1%")(d.pv_rate) + '</li>'));
 				}
 			},
@@ -261,6 +262,11 @@
 		<label>
 			<input type="number" min="0" max="100" value="1" id="yWeight" onchange="candidates.rank()">
 			Poverty Rate Weight<!-- Say that 5 times fast! -->
+		</label>
+		<br>
+		<label>
+			Show top <input type="number" min="1" max="10000" value="100" id="count" onchange="candidates.rank()">
+			counties
 		<ol></ol>
 	</div>
 </body>
