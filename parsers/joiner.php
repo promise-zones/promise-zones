@@ -32,9 +32,6 @@ while ($line = fgets($data)) {
 fclose($data);
 unset($data);
 
-$countyPovertyRateFile = implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'data', 'poverty-rates-by-county.csv']);
-$data = fopen($countyPovertyRateFile, 'r');
-
 //                            _                      _       
 //  _ __   _____   _____ _ __| |_ _   _    _ __ __ _| |_ ___ 
 // | '_ \ / _ \ \ / / _ \ '__| __| | | |  | '__/ _` | __/ _ \
@@ -42,6 +39,9 @@ $data = fopen($countyPovertyRateFile, 'r');
 // | .__/ \___/ \_/ \___|_|   \__|\__, |  |_|  \__,_|\__\___|
 // |_|                            |___/                      
 // 
+$countyPovertyRateFile = implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'data', 'poverty-rates-by-county.csv']);
+$data = fopen($countyPovertyRateFile, 'r');
+
 $headers = fgetcsv($data);
 $i = 0;
 while ($line = fgetcsv($data)) {
@@ -94,6 +94,7 @@ foreach ($countyPops as $countyId => $population) {
 // | |_) | | | (_) | | | | | | \__ \  __/   / / (_) | | | |  __/\__ \
 // | .__/|_|  \___/|_| |_| |_|_|___/\___|  /___\___/|_| |_|\___||___/
 // |_|                                                               
+// 
 $promiseZonesFile = implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'data', 'promise-zones.json']);
 $promiseZones = json_decode(file_get_contents($promiseZonesFile), true);
 foreach ($promiseZones as $zone) {
