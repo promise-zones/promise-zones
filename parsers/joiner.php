@@ -26,7 +26,8 @@ while ($line = fgets($data)) {
   }
   $countyData['ue_rate'] = $countyData['ue_rate'] / 100;
   $countyData['pz'] = false;
-  $areas[implode('', [$countyData['fips_state'], $countyData['fips_county']])] = $countyData;
+  $countyData['fips_id'] = $countyData['fips_state'] . $countyData['fips_county'];
+  $areas[$countyData['fips_id']] = $countyData;
 }
 fclose($data);
 unset($data);
@@ -112,7 +113,7 @@ $areas = array_map(function ($c) {
   if (!$c['pz']) {
     $c['area_name'] = $c['county_name'];
   }
-  return array_intersect_key($c, array_flip(['pv_rate', 'pop', 'ue_rate', 'area_name', 'pz']));
+  return array_intersect_key($c, array_flip(['pv_rate', 'pop', 'ue_rate', 'area_name', 'pz', 'fips_id']));
 }, $areas);
 
 fwrite(STDOUT, json_encode(array_values($areas), JSON_PRETTY_PRINT));
